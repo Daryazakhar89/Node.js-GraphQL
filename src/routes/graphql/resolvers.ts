@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Post, PrismaClient, Profile, User } from '@prisma/client';
 import { UUIDType } from './types/uuid.js';
 import { UUID } from 'crypto';
 
@@ -131,6 +131,7 @@ export const resolvers = {
 
     return memberType;
   },
+
   posts(args, contextValue: { prisma: PrismaClient }) {
     const prisma = contextValue.prisma;
 
@@ -148,6 +149,7 @@ export const resolvers = {
 
     return post;
   },
+
   profiles(args, contextValue: { prisma: PrismaClient }) {
     const prisma = contextValue.prisma;
 
@@ -164,5 +166,108 @@ export const resolvers = {
     });
 
     return profile;
+  },
+
+  createProfile({ dto }: { dto: Profile }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    return prisma.profile.create({
+      data: dto,
+    });
+  },
+
+  createUser({ dto }: { dto: User }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    return prisma.user.create({
+      data: dto,
+    });
+  },
+
+  createPost({ dto }: { dto: Post }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    return prisma.post.create({
+      data: dto,
+    });
+  },
+
+  async deletePost({ id }: { id: UUID }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    await prisma.post.delete({
+      where: { id },
+    });
+  },
+
+  async deleteUser({ id }: { id: UUID }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    await prisma.user.delete({
+      where: { id },
+    });
+  },
+
+  async deleteProfile({ id }: { id: UUID }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    await prisma.profile.delete({
+      where: { id },
+    });
+  },
+
+  changePost({ id, dto }: { id: UUID, dto: Post }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    return prisma.post.update({
+      where: { id },
+      data: dto,
+    });
+  },
+
+  changeUser({ id, dto }: { id: UUID, dto: User }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    return prisma.user.update({
+      where: { id },
+      data: dto,
+    });
+  },
+
+  changeProfile({ id, dto }: { id: UUID, dto: Profile }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    return prisma.profile.update({
+      where: { id },
+      data: dto,
+    });
+  },
+
+  subscribeTo({ userId, authorId }: { userId: UUID, authorId: UUID }, contextValue: { prisma: PrismaClient }) {
+    return contextValue.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        userSubscribedTo: {
+          create: {
+            authorId: authorId,
+          },
+        },
+      },
+    });
+  },
+
+  async unsubscribeFrom({ userId, authorId }: { userId: UUID, authorId: UUID }, contextValue: { prisma: PrismaClient }) {
+    const prisma = contextValue.prisma;
+
+    await prisma.subscribersOnAuthors.delete({
+      where: {
+        subscriberId_authorId: {
+          subscriberId: userId,
+          authorId: authorId,
+        },
+      },
+    });
   },
 };
